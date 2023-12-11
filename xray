@@ -1,6 +1,6 @@
 DEFAULT_START_PORT=20000                         #默认起始端口
-DEFAULT_SOCKS_USERNAME="userb"                   #默认socks账号
-DEFAULT_SOCKS_PASSWORD="passwordb"               #默认socks密码
+DEFAULT_SOCKS_USERNAME="user^%$#@!"                   #默认socks账号
+DEFAULT_SOCKS_PASSWORD="password!@#$%^"               #默认socks密码
 DEFAULT_WS_PATH="/ws"                            #默认ws路径
 DEFAULT_UUID=$(cat /proc/sys/kernel/random/uuid) #默认随机UUID
 
@@ -35,8 +35,8 @@ EOF
 config_xray() {
 	config_type=$1
 	mkdir -p /etc/xrayL
-	if [ "$config_type" != "socks" ] && [ "$config_type" != "vmess" ]; then
-		echo "类型错误！仅支持socks和vmess."
+	if [ "$config_type" != "socks" ] && [ "$config_type" != "vmess" ] && [ "$config_type" != "http" ]; then
+		echo "类型错误！仅支持socks和vmess和http."
 		exit 1
 	fi
 
@@ -53,6 +53,12 @@ config_xray() {
 		UUID=${UUID:-$DEFAULT_UUID}
 		read -p "WebSocket 路径 (默认 $DEFAULT_WS_PATH): " WS_PATH
 		WS_PATH=${WS_PATH:-$DEFAULT_WS_PATH}
+    elif [ "$config_type" == "http" ]; then
+		read -p "HTTP 账号 (默认 $DEFAULT_HTTP_USERNAME): " HTTP_USERNAME
+		HTTP_USERNAME=${HTTP_USERNAME:-$DEFAULT_HTTP_USERNAME}
+
+		read -p "HTTP 密码 (默认 $DEFAULT_HTTP_PASSWORD): " HTTP_PASSWORD
+		HTTP_PASSWORD=${HTTP_PASSWORD:-$DEFAULT_HTTP_PASSWORD}   
 	fi
 
 	for ((i = 0; i < ${#IP_ADDRESSES[@]}; i++)); do
@@ -75,6 +81,12 @@ config_xray() {
 			config_content+="network = \"ws\"\n"
 			config_content+="[inbounds.streamSettings.wsSettings]\n"
 			config_content+="path = \"$WS_PATH\"\n\n"
+        elif [ "$config_type" == "http" ]; then
+			config_content+="auth = \"password\"\n"
+			config_content+="ip = \"${IP_ADDRESSES[i]}\"\n"
+			config_content+="[[inbounds.settings.accounts]]\n"
+			config_content+="user = \"$HTTP_USERNAME\"\n"
+			config_content+="pass = \"$HTTP_PASSWORD\"\n"
 		fi
 		config_content+="[[outbounds]]\n"
 		config_content+="sendThrough = \"${IP_ADDRESSES[i]}\"\n"
@@ -98,6 +110,9 @@ config_xray() {
 	elif [ "$config_type" == "vmess" ]; then
 		echo "UUID:$UUID"
 		echo "ws路径:$WS_PATH"
+    elif [ "$config_type" == "HTTP" ]; then
+		echo "socks账号:$HTTP_USERNAME"
+		echo "socks密码:$HTTP_PASSWORD"
 	fi
 	echo ""
 }
@@ -106,12 +121,14 @@ main() {
 	if [ $# -eq 1 ]; then
 		config_type="$1"
 	else
-		read -p "选择生成的节点类型 (socks/vmess): " config_type
+		read -p "选择生成的节点类型 (socks/vmess/http): " config_type
 	fi
 	if [ "$config_type" == "vmess" ]; then
 		config_xray "vmess"
 	elif [ "$config_type" == "socks" ]; then
 		config_xray "socks"
+    elif [ "$config_type" == "http" ]; then
+		config_xray "http"
 	else
 		echo "未正确选择类型，使用默认sokcs配置."
 		config_xray "socks"
