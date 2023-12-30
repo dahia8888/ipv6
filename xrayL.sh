@@ -13,7 +13,10 @@ install_xray() {
 	apt-get install unzip -y || yum install unzip -y
 	#wget https://183.230.82.107/root/Xray-linux-64.zip
 	#wget https://github.com/XTLS/Xray-core/releases/download/v1.8.3/Xray-linux-64.zip
-	wget https://f.ws59.cn/f/cw9rrvlg8ns/Xray-linux-64.zip
+	if [ ! -f "/root/Xray-linux-64.zip" ];then
+	echo "Xray  soft isnt exist!"
+    wget https://f.ws59.cn/f/cw9rrvlg8ns/Xray-linux-64.zip
+	fi	
 	#wget http://deershare.com/recv/825658
 	unzip Xray-linux-64.zip
 	mv xray /usr/local/bin/xrayL
